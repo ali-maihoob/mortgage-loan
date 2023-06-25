@@ -9,12 +9,20 @@ use Illuminate\Support\Facades\Auth;
 
 class LoanController extends Controller
 {
+    public function index()
+    {
+        $loans = Loan::paginate(10);
+        return view('loan.index', [
+            'loans' => $loans
+        ]);
+    }
     public function create()
     {
         return view('loan.create');
     }
 
-    public function store(StoreLoanRequest $request) {
+    public function store(StoreLoanRequest $request)
+    {
         $loanAmount = $request->input('loan_amount');
         $interestRate = $request->input('interest_rate');
         $loanTerm = $request->input('loan_term');

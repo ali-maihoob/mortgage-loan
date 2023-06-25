@@ -20,9 +20,9 @@ Route::get('/', function () {
 
 Auth::routes();
 
-Route::group(['middleware' => ['auth:sanctum']], function () {
-    Route::get('/home', [HomeController::class, 'index'])->name('home');
-    Route::prefix('admin')->group(function () {
+Route::group(['middleware' => ['auth']], function () {
+    Route::prefix('loan')->group(function () {
+        Route::get('/', [LoanController::class, 'index'])->name('loan.index');
         Route::get('/create', [LoanController::class, 'create'])->name('loan.create');
         Route::post('/store', [LoanController::class, 'store'])->name('loan.store');
     });
