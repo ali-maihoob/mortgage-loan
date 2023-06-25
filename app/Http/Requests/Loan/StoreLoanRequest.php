@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Loan;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Constants\LoanConstants;
 
 class StoreLoanRequest extends FormRequest
 {
@@ -24,11 +25,11 @@ class StoreLoanRequest extends FormRequest
     public function rules()
     {
         return [
-            'loan_amount' => 'required|numeric|min:0',
-            'interest_rate' => 'required|numeric|min:0|max:100',
-            'monthly_payment' => 'nullable|numeric|min:0',
-            'fixed_extra_payment' => 'nullable|numeric|min:0',
-            'loan_term' => 'required|integer|min:1|max:20',
+            'loan_amount' => 'required|numeric|min:' . LoanConstants::MIN_LOAN_AMOUNT,
+            'interest_rate' => 'required|numeric|min:' . LoanConstants::MIN_INTEREST_RATE . '|max:' . LoanConstants::MAX_INTEREST_RATE,
+            'monthly_payment' => 'nullable|numeric|min:' . LoanConstants::MIN_MONTHLY_PAYMENT,
+            'fixed_extra_payment' => 'nullable|numeric|min:' . LoanConstants::MIN_FIXED_EXTRA_PAYMENT,
+            'loan_term' => 'required|integer|min:' . LoanConstants::MIN_LOAN_TERM . '|max:' . LoanConstants::MAX_LOAN_TERM,
         ];
     }
 }
