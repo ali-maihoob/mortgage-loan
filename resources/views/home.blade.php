@@ -13,6 +13,9 @@
                             {{ session('status') }}
                         </div>
                     @endif
+                    <div>
+                        <a href="{{ route('loan.create') }}" class="btn btn-primary">Request New Loan</a>
+                    </div>
                 </div>
             </div>
         </div>
