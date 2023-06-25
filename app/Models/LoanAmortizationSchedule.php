@@ -16,6 +16,7 @@ class LoanAmortizationSchedule extends Model
         'monthly_payment',
         'principal_component',
         'interest_component',
+        'extra_repayment_made',
         'ending_balance',
         'loan_id'
     ];

@@ -30,6 +30,7 @@ class LoanHelper
             $interestComponent = $remainingBalance * $interestRate;
 
             // Deduct the fixed extra payment from the remaining balance
+            $startingBalance = $remainingBalance;
             $remainingBalance -= $fixedExtraPayment;
 
             $principalComponent = $monthlyPayment - $interestComponent;
@@ -40,7 +41,7 @@ class LoanHelper
             $scheduleData = [
                 'loan_id' => $loan->id,
                 'month_number' => $month,
-                'starting_balance' => $remainingBalance,
+                'starting_balance' => $startingBalance,
                 'monthly_payment' => $monthlyPayment,
                 'principal_component' => $principalComponent,
                 'interest_component' => $interestComponent,
