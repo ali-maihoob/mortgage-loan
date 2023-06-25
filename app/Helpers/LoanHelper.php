@@ -47,7 +47,6 @@ class LoanHelper
                 'interest_component' => $interestComponent,
                 'extra_repayment_made' => $fixedExtraPayment,
                 'ending_balance' => $endingBalance,
-                'remaining_loan_term' => $loanTerm - $month,
             ];
 
             LoanAmortizationSchedule::create($scheduleData);

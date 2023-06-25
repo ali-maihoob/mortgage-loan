@@ -18,7 +18,7 @@
                         <p>Interest Rate: {{ $loan->interest_rate }} %</p>
                         <p>Loan Term: {{ $loan->loan_term }} months</p>
                         <p>Monthly Payment: {{ $loan->monthly_payment }} $</p>
-                        <p>Fixed Extra Payment: {{ $loan->fixed_extra_payment ?? 'N/A' }} $</p>
+                        <p>Fixed Extra Payment: {{ $loan->fixed_extra_payment ?? 0 }} $</p>
 
                         <hr>
 
