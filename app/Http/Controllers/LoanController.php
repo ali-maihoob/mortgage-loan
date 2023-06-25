@@ -7,6 +7,8 @@ use App\Http\Requests\Loan\StoreLoanRequest;
 use App\Models\Loan;
 use App\Models\LoanAmortizationSchedule;
 use Illuminate\Support\Facades\Auth;
+use App\Models\ExtraRepaymentSchedule;
+use Illuminate\Http\Request;
 
 class LoanController extends Controller
 {
@@ -22,9 +24,11 @@ class LoanController extends Controller
     {
         $loan = Loan::findOrFail($id);
         $loanAmortizationSchedule = LoanAmortizationSchedule::where('loan_id', $id)->paginate(25);
+        $extraRepaymentSchedule = ExtraRepaymentSchedule::where('loan_id', $loan->id)->orderBy('month_number')->get();
         return view('loan.show', [
             'loan' => $loan,
-            'loanAmortizationSchedule' => $loanAmortizationSchedule
+            'loanAmortizationSchedule' => $loanAmortizationSchedule,
+            'extraRepaymentSchedule' => $extraRepaymentSchedule
         ]);
     }
     public function create()
@@ -56,4 +60,42 @@ class LoanController extends Controller
         }
         return redirect()->route('loan.index')->with('success', 'The loan has been created successfully');
     }
+
+    public function addExtraPayment(Request $request, $id)
+    {
+        $loan = Loan::findOrFail($id);
+
+        $extraPayment = $request->input('extra_payment');
+        $monthNumber = $request->input('month_number');
+
+        $amortizationSchedule = $loan->amortizationSchedule()->where('month_number', $monthNumber)->first();
+
+        if ($amortizationSchedule) {
+            $endingBalance = $amortizationSchedule->ending_balance;
+            $updatedEndingBalance = $endingBalance - $extraPayment;
+
+            $amortizationSchedule->extra_repayment_made = $extraPayment;
+            $amortizationSchedule->ending_balance = $updatedEndingBalance;
+            $amortizationSchedule->save();
+
+            $remainingLoanTerm = $loan->loan_term - $monthNumber;
+
+            ExtraRepaymentSchedule::create([
+                'loan_id' => $loan->id,
+                'month_number' => $monthNumber,
+                'starting_balance' => $endingBalance,
+                'monthly_payment' => $amortizationSchedule->monthly_payment,
+                'principal_component' => $amortizationSchedule->principal_component,
+                'interest_component' => $amortizationSchedule->interest_component,
+                'extra_repayment_made' => $extraPayment,
+                'ending_balance' => $updatedEndingBalance,
+                'remaining_loan_term' => $remainingLoanTerm,
+            ]);
+
+            return redirect()->route('loan.show', $loan->id)->with('success', 'Extra payment added successfully');
+        }
+
+        return redirect()->route('loan.show', $loan->id)->with('error', 'Invalid month number');
+    }
+
 }
