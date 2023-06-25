@@ -24,6 +24,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::prefix('loan')->group(function () {
         Route::get('/', [LoanController::class, 'index'])->name('loan.index');
         Route::get('/create', [LoanController::class, 'create'])->name('loan.create');
+        Route::get('/{id}', [LoanController::class, 'show'])->name('loan.show');
         Route::post('/store', [LoanController::class, 'store'])->name('loan.store');
     });
 });
