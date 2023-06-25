@@ -2,19 +2,22 @@
 
 namespace App\Http\Controllers;
 
-use App\Helpers\LoanHelper;
 use App\Http\Requests\Loan\StoreLoanRequest;
-use App\Models\Loan;
-use App\Models\LoanAmortizationSchedule;
-use Illuminate\Support\Facades\Auth;
-use App\Models\ExtraRepaymentSchedule;
+use App\Repositories\LoanRepository;
 use Illuminate\Http\Request;
 
 class LoanController extends Controller
 {
+    private $loanRepository;
+
+    public function __construct(LoanRepository $loanRepository)
+    {
+        $this->loanRepository = $loanRepository;
+    }
+
     public function index()
     {
-        $loans = Loan::paginate(10);
+        $loans = $this->loanRepository->getAllLoans();
         return view('loan.index', [
             'loans' => $loans
         ]);
@@ -22,15 +25,17 @@ class LoanController extends Controller
 
     public function show($id)
     {
-        $loan = Loan::findOrFail($id);
-        $loanAmortizationSchedule = LoanAmortizationSchedule::where('loan_id', $id)->paginate(25);
-        $extraRepaymentSchedule = ExtraRepaymentSchedule::where('loan_id', $loan->id)->orderBy('month_number')->get();
+        $loan = $this->loanRepository->findLoanById($id);
+        $loanAmortizationSchedule = $this->loanRepository->getLoanAmortizationSchedule($id);
+        $extraRepaymentSchedule = $this->loanRepository->getExtraRepaymentSchedule($loan->id);
+
         return view('loan.show', [
             'loan' => $loan,
             'loanAmortizationSchedule' => $loanAmortizationSchedule,
             'extraRepaymentSchedule' => $extraRepaymentSchedule
         ]);
     }
+
     public function create()
     {
         return view('loan.create');
@@ -38,64 +43,23 @@ class LoanController extends Controller
 
     public function store(StoreLoanRequest $request)
     {
-        $loanAmount = $request->input('loan_amount');
-        $interestRate = $request->input('interest_rate');
-        $loanTerm = $request->input('loan_term');
-        $monthlyPayment = LoanHelper::calculateMonthlyPayment($loanAmount, $interestRate, $loanTerm);
+        $loanData = $request->validated();
+        $loan = $this->loanRepository->createLoan($loanData);
 
-        // Calculate the fixed extra payment amount (if any)
-        $fixedExtraPayment = $request->input('fixed_extra_payment');
-
-        // Store the loan data in the database
-        $loan = new Loan([
-            'loan_amount' => $loanAmount,
-            'interest_rate' => $interestRate,
-            'loan_term' => $loanTerm * 12,
-            'monthly_payment' => $monthlyPayment,
-            'fixed_extra_payment' => $fixedExtraPayment,
-            'user_id' => Auth::id(),
-        ]);
-        if($loan->save()) {
-            LoanHelper::generateAmortizationSchedule($loan);
-        }
-        return redirect()->route('loan.index')->with('success', 'The loan has been created successfully');
+        return redirect()->route('loan.index')->with('success', __('loan.loan_created_success_msg'));
     }
 
     public function addExtraPayment(Request $request, $id)
     {
-        $loan = Loan::findOrFail($id);
+        $loan = $this->loanRepository->findLoanById($id);
 
         $extraPayment = $request->input('extra_payment');
         $monthNumber = $request->input('month_number');
 
-        $amortizationSchedule = $loan->amortizationSchedule()->where('month_number', $monthNumber)->first();
-
-        if ($amortizationSchedule) {
-            $endingBalance = $amortizationSchedule->ending_balance;
-            $updatedEndingBalance = $endingBalance - $extraPayment;
-
-            $amortizationSchedule->extra_repayment_made = $extraPayment;
-            $amortizationSchedule->ending_balance = $updatedEndingBalance;
-            $amortizationSchedule->save();
-
-            $remainingLoanTerm = $loan->loan_term - $monthNumber;
-
-            ExtraRepaymentSchedule::create([
-                'loan_id' => $loan->id,
-                'month_number' => $monthNumber,
-                'starting_balance' => $endingBalance,
-                'monthly_payment' => $amortizationSchedule->monthly_payment,
-                'principal_component' => $amortizationSchedule->principal_component,
-                'interest_component' => $amortizationSchedule->interest_component,
-                'extra_repayment_made' => $extraPayment,
-                'ending_balance' => $updatedEndingBalance,
-                'remaining_loan_term' => $remainingLoanTerm,
-            ]);
-
-            return redirect()->route('loan.show', $loan->id)->with('success', 'Extra payment added successfully');
+        if ($this->loanRepository->addExtraPayment($loan, $extraPayment, $monthNumber)) {
+            return redirect()->route('loan.show', $loan->id)->with('success', __('loan.add_extra_payment_success_msg'));
         }
 
-        return redirect()->route('loan.show', $loan->id)->with('error', 'Invalid month number');
+        return redirect()->route('loan.show', $loan->id)->with('error', __('loan.invalid_month_number'));
     }
-
 }
