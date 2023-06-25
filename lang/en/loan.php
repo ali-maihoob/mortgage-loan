@@ -32,7 +32,7 @@ return [
     'extra_payment_label' => 'Extra Payment',
     'month_number_label' => 'Month Number',
     'add_extra_payment_button' => 'Add Extra Payment',
+    'invalid_month_number' => 'Invalid month number',
     'add_extra_payment_success_msg' => 'Extra payment added successfully',
-    'loan_created_success_msg' => 'The loan has been created successfully',
-    'invalid_month_number' => 'Invalid month number'
+    'loan_created_success_msg' => 'The loan has been created successfully'
 ];
