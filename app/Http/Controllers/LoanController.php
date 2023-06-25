@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Helpers\LoanHelper;
 use App\Http\Requests\Loan\StoreLoanRequest;
 use App\Models\Loan;
+use App\Models\LoanAmortizationSchedule;
 use Illuminate\Support\Facades\Auth;
 
 class LoanController extends Controller
@@ -14,6 +15,16 @@ class LoanController extends Controller
         $loans = Loan::paginate(10);
         return view('loan.index', [
             'loans' => $loans
+        ]);
+    }
+
+    public function show($id)
+    {
+        $loan = Loan::findOrFail($id);
+        $loanAmortizationSchedule = LoanAmortizationSchedule::where('loan_id', $id)->paginate(25);
+        return view('loan.show', [
+            'loan' => $loan,
+            'loanAmortizationSchedule' => $loanAmortizationSchedule
         ]);
     }
     public function create()
@@ -36,6 +47,9 @@ class LoanController extends Controller
             'monthly_payment' => $monthlyPayment,
             'user_id' => Auth::id(),
         ]);
-        $loan->save();
+        if($loan->save()) {
+            LoanHelper::generateAmortizationSchedule($loan);
+        }
+        return redirect()->route('loan.index')->with('success', 'The loan has been created successfully');
     }
 }

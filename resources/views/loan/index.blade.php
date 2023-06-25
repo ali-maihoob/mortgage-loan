@@ -35,7 +35,7 @@
                                         <td>{{ $loan->loan_term / 12 }} years</td>
                                         <td>{{ $loan->created_at }}</td>
                                         <td>
-                                            <button type="button" class="btn btn-secondary btn-sm">Show Details</button>
+                                            <a href="{{ route('loan.show', ['id' => $loan->id]) }}" class="btn btn-secondary btn-sm">Show Details</a>
                                         </td>
                                     </tr>
                                 @endforeach
